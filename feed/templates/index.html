@@ -1,0 +1,88 @@
+<html>
+    <head>
+        <title>Django Photo feed</title>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+        <script src="//js.pusher.com/4.0/pusher.min.js"></script>
+    </head>
+    <body>
+     
+        <div class="container">
+            <form  method="post" enctype="multipart/form-data" action="/push_feed" onsubmit="return feed_it()">
+            <input type="hidden" id="csrf" name="csrf" value="{{ csrf_token }}"/>
+            <div class="form-group">
+                    <label for="usr">Image:</label>
+                    <input type="file" id="document" name="document" class="form-control"  required>
+                </div>
+                <div class="form-group">
+                    <label for="pwd">comment:</label>
+                    <input type="text" id="description" name="description"  class="form-control"  required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-success">Feed it</button>
+                </div>
+            </form>
+            <div class="row" id="feeds">
+                {% for doc in all_documents  %}
+                <span>
+                    <h2>{{doc.description}}</h2>
+                    <img  src="{{doc.document}}">
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+    </body>
+</html>
+
+<script>
+var files;
+
+// Add events
+$(document).ready(function(){
+$('input[type=file]').on('change', prepareUpload);
+})
+
+
+// Grab the files and set them to our variable
+function prepareUpload(event)
+{
+  files = event.target.files;
+}
+    function feed_it(){
+        var data = new FormData();
+        $.each(files, function(key, value)
+        {
+            data.append('document', value);
+        });
+        data.append('description', document.getElementById('description').value);
+        
+        data.append('csrfmiddlewaretoken', document.getElementById('csrf').value);
+         $.post({
+        url: '/push_feed',
+        data: data,
+        processData: false, // Don't process the files
+        contentType: false, // Set content type to false as jQuery will tell the server its a query string request
+        success: function (data) {
+            if(data=="ok"){
+                alert('done');
+                document.getElementById('description').value = '';
+            }
+        },
+        error: function(error){
+            alert('an error occured, please try again later')
+        }
+      });
+        return false;
+    }
+    var pusher = new Pusher('XXX_APP_KEY',{
+      cluster: 'XXX_APP_CLUSTER'
+    });
+    var my_channel = pusher.subscribe('a_channel');
+    my_channel.bind("an_event", function (doc) {
+        var new_message = `<span>
+                    <h2>`+doc.description+`</h2>
+                    <img  src="`+doc.document+`">
+                </span>`;
+    $('#feeds').prepend(new_message);
+    });
+</script>
