@@ -34,7 +34,7 @@ def push_feed(request):
         if form.is_valid():
             f = form.save()
             # trigger a pusher request after saving the new feed element 
-            pusher.trigger(u'a-test_channel', u'an_event', {u'description': f.description, u'document': f.document.url})
+            pusher.trigger(u'private-a_channel', u'an_event', {u'description': f.description, u'document': f.document.url})
             return HttpResponse('ok')
         else:
             # return a form not valid error
